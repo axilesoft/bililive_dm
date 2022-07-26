@@ -35,6 +35,7 @@ using DataGrid = System.Windows.Controls.DataGrid;
 using MenuItem = System.Windows.Controls.MenuItem;
 using MessageBox = System.Windows.MessageBox;
 using System.Windows.Markup;
+using System.Runtime.InteropServices;
 
 namespace Bililive_dm
 {
@@ -691,6 +692,8 @@ namespace Bililive_dm
                 _danmakuQueue.Enqueue(danmakuModel);
             }
 
+            Class1_ReceivedDanmaku(e);
+
             foreach (var dmPlugin in App.Plugins)
             {
                 if (dmPlugin.Status)
@@ -707,6 +710,56 @@ namespace Bililive_dm
                     }).Start();
             }
         }
+
+
+        public struct COPYDATASTRUCT
+        {
+            public IntPtr dwData; //可以是任意值
+            public int cbData;    //指定lpData内存区域的字节数
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string lpData; //发送给目录窗口所在进程的数据
+        }
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr FindWindow(string lpClassName, String lpWindowName);
+        [DllImport("user32.dll")]
+        public static extern IntPtr SendMessage(IntPtr hWnd, UInt32 wMsg, IntPtr wParam, IntPtr lParam);
+        [DllImport("user32.dll")]
+        public static extern IntPtr PostMessage(IntPtr hWnd, UInt32 wMsg, IntPtr wParam, IntPtr lParam);
+
+        IntPtr getWin() { return FindWindow("VKUPAPP", "VKUPAPP"); }
+        private void Class1_ReceivedDanmaku(BilibiliDM_PluginFramework.ReceivedDanmakuArgs e)
+        {
+            var dm = e.Danmaku;
+
+            if (dm.MsgType != MsgTypeEnum.Comment || dm.UserName == null || dm.CommentText == null || (dm.UserName.Length < 1 || dm.CommentText.Length < 1))
+                return;
+            //throw new NotImplementedException();
+            string sendString = dm.UserName + "|" + dm.CommentText;
+            SendMsgToApp(sendString);
+        }
+
+        private void SendMsgToApp(string sendString)
+        {
+            if (debug_mode)
+            {
+                logging("SendMsgToApp：" + sendString);
+            }
+
+            byte[] sarr = System.Text.Encoding.Unicode.GetBytes(sendString);
+            int len = sarr.Length;
+            COPYDATASTRUCT cds;
+            cds.dwData = (IntPtr)2;
+            cds.cbData = len + 2;
+            cds.lpData = sendString;
+            IntPtr pnt = Marshal.AllocHGlobal(Marshal.SizeOf(cds));
+            Marshal.StructureToPtr(cds, pnt, false);
+
+            // cds.lpData = Marshal.AllocHGlobal(sarr.Length);// public IntPtr lpData; 
+            //   Marshal.Copy(sarr, 0, cds.lpData, sarr.Length);
+            SendMessage(getWin(), 0x004A, (IntPtr)0, pnt);// WM_COPYDATA
+        }
+
 
         private void ProcDanmaku(DanmakuModel danmakuModel)
         {
@@ -853,6 +906,9 @@ namespace Bililive_dm
                         if (ShowItem.IsChecked == true)
                         {
                             AddDMText(text, null, true);
+
+                            string sendString = "{Axile's Danmaku AI}|欢迎 欢迎 热烈欢迎#1";
+                            SendMsgToApp(sendString);
                         }
                     }));
 
