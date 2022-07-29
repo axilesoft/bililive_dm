@@ -127,13 +127,13 @@ namespace Bililive_dm
             }
 
 
-            try
+            //try
+            //{
+            //    this.RoomId.Text = Properties.Settings.Default.roomId.ToString();
+            //}
+            //catch
             {
-                this.RoomId.Text = Properties.Settings.Default.roomId.ToString();
-            }
-            catch
-            {
-                this.RoomId.Text = "";
+                this.RoomId.Text = "9061824";
             }
 
             var cmd_args = Environment.GetCommandLineArgs();
@@ -163,8 +163,8 @@ namespace Bililive_dm
 #if !DEBUG
                 if(!(Debugger.IsAttached || offline_mode))
                 {
-                    MessageBox.Show(Application.Current.MainWindow, Properties.Resources.MainWindow_MainWindow_你的打开方式不正确);
-                    this.Close();
+                   MessageBox.Show(Application.Current.MainWindow, Properties.Resources.MainWindow_MainWindow_你的打开方式不正确);
+                   // this.Close();
                 }
 #endif
             }
@@ -727,7 +727,8 @@ namespace Bililive_dm
         [DllImport("user32.dll")]
         public static extern IntPtr PostMessage(IntPtr hWnd, UInt32 wMsg, IntPtr wParam, IntPtr lParam);
 
-        IntPtr getWin() { return FindWindow("VKUPAPP", "VKUPAPP"); }
+        //IntPtr getWin() { return FindWindow("VKUPAPP", "VKUPAPP"); }
+        IntPtr getWin() { return FindWindow("Text Firework", "Text Firework - Preview"); }
         private void Class1_ReceivedDanmaku(BilibiliDM_PluginFramework.ReceivedDanmakuArgs e)
         {
             var dm = e.Danmaku;
@@ -903,12 +904,13 @@ namespace Bililive_dm
                     logging(text);
                     Dispatcher.BeginInvoke(new Action(() =>
                     {
+                        string sendString = "{Axile's Danmaku AI}|欢迎" + danmakuModel.UserName + "#";
+                        SendMsgToApp(sendString);
                         if (ShowItem.IsChecked == true)
                         {
                             AddDMText(text, null, true);
 
-                            string sendString = "{Axile's Danmaku AI}|欢迎 欢迎 热烈欢迎#1";
-                            SendMsgToApp(sendString);
+ 
                         }
                     }));
 
@@ -935,10 +937,15 @@ namespace Bililive_dm
                             danmakuModel.UserName));
                     Dispatcher.BeginInvoke(new Action(() =>
                     {
+                        string sendString = "{Axile's Danmaku AI}|欢迎\n" + danmakuModel.UserName + "#";
+                        SendMsgToApp(sendString);
                         if (ShowItem.IsChecked == true)
                         {
+
                             AddDMText(string.Format(Properties.Resources.MainWindow_ProcDanmaku_欢迎_0____1__2_, guard_text,
                                 danmakuModel.UserName),null, true);
+
+  
                         }
                     }));
                     break;
@@ -1726,6 +1733,11 @@ namespace Bililive_dm
                 App.Current.merged[0] = result;
             }
             merged[0] = new ResourceDictionary();
+        }
+
+        private void RoomId_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
         }
     }
 }
